@@ -14,7 +14,7 @@
 
 ### 方式一：網頁版（推薦）
 
-直接訪問：**https://你的用戶名.github.io/pdf-to-pptx-editable/**
+直接訪問：**https://dennis23100.github.io/pdf_to_pptx/**
 
 或者本地開啟 `web/index.html`
 
