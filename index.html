@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 轉 PPTX 工具 - 可編輯文字版</title>
+  <meta name="description" content="免費線上 PDF 轉 PowerPoint 工具，保留原始設計，文字方塊可編輯移動">
+  <meta name="keywords" content="PDF, PPTX, PowerPoint, 轉換, OCR, 免費">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+  
+  <!-- External Libraries -->
+  <!-- PDF.js - PDF 解析 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <!-- Tesseract.js - OCR 引擎 -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  
+  <!-- PptxGenJS - PPTX 產生器 -->
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>📄 PDF 轉 PPTX 工具</h1>
+      <p class="subtitle">保留原始設計，文字方塊可編輯移動</p>
+    </header>
+
+    <!-- Main Card -->
+    <div class="card">
+      <!-- Upload Zone -->
+      <label class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf,application/pdf">
+        <div id="uploadPrompt">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">點擊或拖曳 PDF 檔案到此處</div>
+        </div>
+        <div id="fileInfo" class="file-info">
+          <div class="upload-icon">📎</div>
+          <div class="file-name" id="fileName"></div>
+          <div class="file-meta" id="fileMeta"></div>
+        </div>
+      </label>
+
+      <!-- Mode Selection -->
+      <div class="options-section">
+        <h3>🎯 轉換模式</h3>
+        <div class="options-grid">
+          <div class="option-card active" data-mode="native">
+            <div class="icon">📝</div>
+            <div class="label">原生文字模式</div>
+            <div class="desc">提取 PDF 內建文字層（速度快）</div>
+          </div>
+          <div class="option-card" data-mode="ocr">
+            <div class="icon">🔍</div>
+            <div class="label">OCR 辨識模式</div>
+            <div class="desc">AI 辨識圖片中的文字（適合掃描版）</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language Selection (for OCR) -->
+      <div class="lang-section">
+        <label for="langSelect">🌐 OCR 語言（僅 OCR 模式需要）</label>
+        <select id="langSelect">
+          <option value="chi_tra+eng">繁體中文 + 英文</option>
+          <option value="chi_sim+eng">簡體中文 + 英文</option>
+          <option value="eng">僅英文</option>
+          <option value="jpn+eng">日文 + 英文</option>
+          <option value="kor+eng">韓文 + 英文</option>
+        </select>
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-box" id="errorBox"></div>
+
+      <!-- Progress -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">準備中...</div>
+        <div class="progress-detail" id="progressDetail"></div>
+      </div>
+
+      <!-- Success Message -->
+      <div class="success-box" id="successBox">
+        <div class="icon">✅</div>
+        <div class="title">轉換完成！</div>
+        <div class="desc">檔案已自動下載，請在 PowerPoint 中開啟編輯</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <button class="btn" id="convertBtn" disabled>
+        🚀 開始轉換
+      </button>
+      <button class="btn btn-secondary" id="resetBtn" style="display: none;">
+        🔄 轉換另一個檔案
+      </button>
+
+      <!-- Info Section -->
+      <div class="info-section">
+        <h3>💡 功能說明</h3>
+        <ul>
+          <li><strong>原生文字模式</strong>：直接提取 PDF 內建的文字層，速度快，適合一般 PDF</li>
+          <li><strong>OCR 辨識模式</strong>：使用 AI 辨識圖片中的文字，適合掃描版或設計類 PDF</li>
+          <li>轉換後的 PPTX 包含：背景圖片 + 可編輯的透明文字方塊</li>
+          <li>你可以在 PowerPoint 中<strong>移動、編輯、刪除</strong>任何文字方塊</li>
+          <li>100% 瀏覽器端處理，<strong>不上傳任何資料</strong>到伺服器</li>
+        </ul>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="preview-section" id="previewSection">
+        <h3>📖 PDF 預覽</h3>
+        <div class="preview-container" id="previewContainer"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Made with ❤️ | 100% 隱私安全，檔案不會上傳到伺服器</p>
+      <p>
+        <a href="https://github.com" target="_blank">GitHub</a> · 
+        開源免費使用
+      </p>
+    </footer>
+  </div>
+
+  <!-- Custom JavaScript Modules -->
+  <script src="js/pdf-parser.js"></script>
+  <script src="js/pptx-builder.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
