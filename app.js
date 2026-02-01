@@ -558,15 +558,25 @@ async function startProcessing() {
             await preloadLamaModel();
         }
         
-        // 初始化 Tesseract
+        // 初始化 Tesseract (修正版：增加錯誤處理與降級機制)
         if (mode !== 'image') {
-            state.tesseractWorker = await Tesseract.createWorker(lang, 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        updateProcessingProgress(20 + m.progress * 20);
-                    }
-                }
-            });
+            try {
+                // 嘗試初始化 Worker
+                state.tesseractWorker = await Tesseract.createWorker(lang, 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            updateProcessingProgress(20 + m.progress * 20);
+                        }
+                    },
+                    // 強制使用指定的 Worker 路徑，避免自動抓取錯誤版本
+                    workerPath: 'https://unpkg.com/tesseract.js@v4.1.1/dist/worker.min.js',
+                    corePath: 'https://unpkg.com/tesseract.js-core@v4.0.4/tesseract-core.wasm.js'
+                });
+            } catch (err) {
+                console.warn('OCR 初始化失敗，嘗試單線程模式', err);
+                // 備用方案：如果不支援 Worker，嘗試不帶參數初始化（依賴 CDN 預設）
+                 state.tesseractWorker = await Tesseract.createWorker(lang);
+            }
         }
         
         updateProcessingStep(1, 'completed');
@@ -653,13 +663,20 @@ async function startProcessing() {
 // ============================================================
 
 async function performOCR(canvas, lang) {
-    const { data } = await state.tesseractWorker.recognize(canvas);
-    
-    return {
-        text: data.text,
-        lines: data.lines.filter(line => line.confidence > 30 && line.text.trim()),
-        words: data.words
-    };
+    if (!state.tesseractWorker) return { text: '', lines: [], words: [] };
+
+    try {
+        const { data } = await state.tesseractWorker.recognize(canvas);
+        
+        return {
+            text: data.text,
+            lines: data.lines.filter(line => line.confidence > 30 && line.text.trim()),
+            words: data.words
+        };
+    } catch (error) {
+        console.warn('OCR 辨識錯誤，跳過此頁:', error);
+        return { text: '', lines: [], words: [] };
+    }
 }
 
 // ============================================================
